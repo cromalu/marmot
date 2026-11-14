@@ -1,9 +1,10 @@
 #![no_std]
 
-use embassy_executor::Spawner;
+use crate::runtime::Runtime;
+pub mod runtime;
 
 /// Client's main logic runs here
-pub fn run(_spawner: Spawner) {
+pub fn run(runtime: &Runtime) {
     log::info!("run - start");
     // TODO turn on activity led
     // TODO run data acquisition from sensor

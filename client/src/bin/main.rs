@@ -55,10 +55,10 @@ async fn main(spawner: Spawner) -> ! {
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_rtos::start(timg0.timer0, peripherals.FROM_CPU_INTR0);
     
+    let runtime = marmot::runtime::Runtime::new(spawner);
     loop {
         info!("Main loop tick");
-        marmot::run(spawner);
+        marmot::run(&runtime);
         Timer::after(Duration::from_secs(10)).await;
     }
-
 }

@@ -5,6 +5,7 @@ use crate::config::Config;
 use crate::error::Error;
 use crate::peripherals::Peripherals;
 use crate::runtime::Runtime;
+use alloc::vec;
 mod config;
 mod error;
 mod network;
@@ -18,8 +19,11 @@ pub async fn run(runtime: &Runtime, peripherals: Peripherals) -> Result<(), Erro
     // TODO turn on activity led
     // TODO run data acquisition from sensor
     // TODO post data to remote server
-    let network = network::new();
-    let _init_network = network.setup(&config.wifi, peripherals.wifi, runtime.spawner).await?;
+    network::new()
+        .setup(&config.wifi, peripherals.wifi, runtime.spawner)
+        .await?
+        .post_data(&config.http, vec![0, 1, 2, 3])
+        .await?;
     // TODO turn off activity led
     // TODO enforce timeout
     log::info!("run - end");

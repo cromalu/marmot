@@ -27,7 +27,7 @@ embassy-net = { version = "0.9.1", features = [
   "log",
   "medium-ethernet",
   "tcp",
-  "udp",
+  "dns",
 ] }
 embedded-io = "0.7.1"
 embedded-io-async = "0.7.0"
@@ -48,19 +48,9 @@ esp-radio = { version = "1.0.0-beta.0", features = [
   "unstable",
   "wifi",
 ] }
-smoltcp = { version = "0.14.0", default-features = false, features = [
-  "log",
-  "medium-ethernet",
-  "multicast",
-  "proto-dhcpv4",
-  "proto-dns",
-  "proto-ipv4",
-  "socket-dns",
-  "socket-icmp",
-  "socket-raw",
-  "socket-tcp",
-  "socket-udp",
-] }
+reqwless = { version = "0.14", default-features = false, features = ["embedded-tls", "log"] }
+embedded-tls = { version = "0.18", default-features = false, features = ["log"] }
+der = { version = "0.8.0-rc.2", default-features = false, features = ["heapless"] }
 
 critical-section = "1.2.0"
 static_cell      = "2.1.1"

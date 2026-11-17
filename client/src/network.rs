@@ -1,12 +1,18 @@
-use crate::config::WifiConfig;
-use crate::error::{Error, WifiError};
+use crate::config::{HttpConfig, WifiConfig};
+use crate::error::{Error, HttpError, WifiError};
+use alloc::format;
+use alloc::vec::Vec;
 use embassy_executor::Spawner;
+use embassy_net::dns::DnsSocket;
+use embassy_net::tcp::client::{TcpClient, TcpClientState};
 use embassy_net::{Runner, Stack};
 use esp_hal::peripherals::WIFI;
 use esp_hal::rng::Rng;
 use esp_radio::wifi::sta::StationConfig;
 use esp_radio::wifi::{AuthenticationMethodConfig, Config, Interface, Password, WifiController};
 use log::info;
+use reqwless::client::{HttpClient, TlsConfig, TlsVerify};
+use reqwless::request::RequestBuilder;
 use static_cell::StaticCell;
 
 pub fn new() -> UninitializedNetwork {
@@ -33,6 +39,52 @@ impl UninitializedNetwork {
     }
 }
 
+impl InitializedNetwork<'_> {
+    pub async fn post_data(
+        &self,
+        http_config: &HttpConfig,
+        data: Vec<u8>,
+    ) -> Result<(), HttpError> {
+        info!("network - posting data...");
+        // Allocates buffers for 1 connection with 1024-byte TX and 1024-byte RX buffers (2 KB total)
+        let client_state: TcpClientState<1, 1024, 1024> = TcpClientState::new();
+        let tcp_client = TcpClient::new(self.stack, &client_state);
+
+        let dns_socket = DnsSocket::new(self.stack);
+
+        let mut tls_read_buf = alloc::vec![0u8; 4096];
+        let mut tls_write_buf = alloc::vec![0u8; 4096];
+
+        let tls_config = TlsConfig::new(
+            generate_seed(),
+            &mut tls_read_buf,
+            &mut tls_write_buf,
+            TlsVerify::None, // Certificate check is not supported on esp32
+        );
+
+        let mut client = HttpClient::new_with_tls(&tcp_client, &dns_socket, tls_config);
+
+        let url = format!(
+            "{}:{}{}",
+            http_config.domain, http_config.port, http_config.end_point
+        );
+        info!("network - url: {}", url);
+        let mut request = client
+            .request(http_config.method, url.as_str())
+            .await?
+            .body(data.as_slice());
+        info!("network - request prepared");
+        let mut rx_buf = [0u8; 2048];
+        let response = request.send(rx_buf.as_mut_slice()).await?;
+        info!("network - response code {}", response.status.0);
+        if response.status.is_server_error() {
+            return Err(HttpError::StatusError(response.status.0));
+        }
+
+        Ok(())
+    }
+}
+
 async fn connect_wifi(
     wifi_config: &WifiConfig,
     wifi_peripheral: WIFI<'static>,
@@ -56,8 +108,6 @@ async fn start_ip_stack<'a>(spawner: Spawner) -> Result<Stack<'a>, Error> {
     info!("network - starting ip stack...");
     let config = embassy_net::Config::dhcpv4(Default::default());
     let interface = Interface::station();
-    let rng = Rng::new();
-    let seed = (rng.random() as u64) << 32 | rng.random() as u64;
 
     // Init network stack
     // NOTE: DHCP and DNS need one socket slot if enabled. This is why we're
@@ -67,7 +117,7 @@ async fn start_ip_stack<'a>(spawner: Spawner) -> Result<Stack<'a>, Error> {
         interface,
         config,
         RESOURCES.init(embassy_net::StackResources::new()),
-        seed,
+        generate_seed(),
     );
     // Launch network task that runs `runner.run().await`
     spawner.spawn(net_task(runner)?);
@@ -78,6 +128,11 @@ async fn start_ip_stack<'a>(spawner: Spawner) -> Result<Stack<'a>, Error> {
         info!("network - got ip: {}", config.address);
     }
     Ok(stack)
+}
+
+fn generate_seed() -> u64 {
+    let rng = Rng::new();
+    (rng.random() as u64) << 32 | rng.random() as u64
 }
 
 #[embassy_executor::task]

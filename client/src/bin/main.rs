@@ -8,7 +8,6 @@
 #![deny(clippy::large_stack_frames)]
 
 use embassy_executor::Spawner;
-use embassy_time::{Duration, Timer};
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
 use esp_hal::timer::timg::TimerGroup;
@@ -55,13 +54,9 @@ async fn main(spawner: Spawner) -> ! {
     let timg0 = TimerGroup::new(peripherals.TIMG0);
     esp_rtos::start(timg0.timer0, peripherals.FROM_CPU_INTR0);
 
-    info!("Main - start");
     let runtime = marmot::runtime::Runtime::new(spawner);
-    let peripherals = marmot::peripherals::Peripherals::new(peripherals.WIFI);
-    marmot::run(&runtime, peripherals).await.expect("Error in main processing");
+    let peripherals = marmot::peripherals::Peripherals::new(peripherals.WIFI, peripherals.LPWR);
+    marmot::run(&runtime, peripherals)
+        .await
 
-    loop {
-        info!("Main - loop tick");
-        Timer::after(Duration::from_secs(10)).await;
-    }
 }

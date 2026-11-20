@@ -1,7 +1,9 @@
-use alloc::string::String;
+use alloc::string::{String, ToString};
+use esp_hal::time::Duration;
 use reqwless::request::Method;
 
 pub struct Config {
+    pub sleep_duration: Duration,
     pub wifi: WifiConfig,
     pub http: HttpConfig,
 }
@@ -17,9 +19,11 @@ pub struct HttpConfig {
     pub method: Method,
 }
 
+
 impl Config {
     pub fn new() -> Config {
         Config {
+            sleep_duration: Duration::from_secs(10),
             wifi: WifiConfig {
                 ssid: String::new(),
                 psk: String::new(),
@@ -30,6 +34,7 @@ impl Config {
                 port: 443,
                 method: Method::POST,
             },
+
         }
     }
 }

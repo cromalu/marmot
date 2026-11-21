@@ -10,8 +10,8 @@
 use embassy_executor::Spawner;
 use esp_backtrace as _;
 use esp_hal::clock::CpuClock;
+use esp_hal::gpio::Pin;
 use esp_hal::timer::timg::TimerGroup;
-use log::info;
 
 extern crate alloc;
 
@@ -55,8 +55,11 @@ async fn main(spawner: Spawner) -> ! {
     esp_rtos::start(timg0.timer0, peripherals.FROM_CPU_INTR0);
 
     let runtime = marmot::runtime::Runtime::new(spawner);
-    let peripherals = marmot::peripherals::Peripherals::new(peripherals.WIFI, peripherals.LPWR);
-    marmot::run(&runtime, peripherals)
-        .await
-
+    let peripherals = marmot::peripherals::Peripherals::new(
+        peripherals.WIFI,
+        peripherals.LPWR,
+        peripherals.RMT,
+        peripherals.GPIO23.degrade(),
+    );
+    marmot::run(&runtime, peripherals).await
 }

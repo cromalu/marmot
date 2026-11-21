@@ -16,6 +16,7 @@ mod error;
 mod network;
 pub mod peripherals;
 pub mod runtime;
+pub mod sensor;
 
 /// Client's main logic runs here
 pub async fn run(runtime: &Runtime, peripherals: Peripherals) -> ! {

@@ -54,7 +54,8 @@ der = { version = "0.8.0-rc.2", default-features = false, features = ["heapless"
 
 critical-section = "1.2.0"
 static_cell      = "2.1.1"
-
+esp-hal-rmt-onewire = "0.4.0"
+fixed = "1.31.0"
 
 # For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html
 [profile.dev]

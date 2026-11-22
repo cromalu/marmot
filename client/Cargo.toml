@@ -57,6 +57,9 @@ static_cell      = "2.1.1"
 esp-hal-rmt-onewire = "0.4.0"
 fixed = "1.31.0"
 
+esp-hal-smartled = "0.18.0"
+smart-leds = "0.4.0"
+
 # For fine tuning these settings, please refer to https://doc.rust-lang.org/cargo/reference/profiles.html
 [profile.dev]
 # The default debug profile is too slow and too big for resource-constrained devices.

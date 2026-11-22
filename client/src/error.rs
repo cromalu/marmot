@@ -37,5 +37,13 @@ pub enum SensorError {
     #[error("One wire error")]
     OneWireError(#[from] esp_hal_rmt_onewire::Error),
     #[error("Acquisition timeout error")]
-    AcquisitionTimeoutError()
+    AcquisitionTimeoutError(),
+}
+
+#[derive(Error, Debug)]
+pub enum LedError {
+    #[error("Rmt config error")]
+    RmtConfigError(#[from] ConfigError),
+    #[error("Smart led error")]
+    SmartLedError(),
 }
